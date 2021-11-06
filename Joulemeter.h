@@ -73,7 +73,7 @@ class JoulemeterClass{
     void Gain_Control(u16 res, float max_I);
 
     //Transmit
-    void Can_send(u16 Can_ID, u16 Can_msg);
+    void Can_send(u16 Can_ID, u8* Can_msg);
     void Can_Recv();
 
     //private: //not really sure if it works
@@ -85,8 +85,11 @@ class JoulemeterClass{
 
     uint8_t Gain_sel = 60;               //record the current setting of gain_sel, [0] refer to sel_0, [1] refer to sel_1
     
+    uint8_t command_flag;
     
 };
 
 
 #endif // _JOULEMETER_H_
+
+extern JoulemeterClass Joulemeter;

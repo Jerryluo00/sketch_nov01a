@@ -28,7 +28,7 @@ void JoulemeterClass::Init(void)
   //right side
   pinMode(Pin_MSUR_V,   OUTPUT);  
   pinMode(Pin_OCF,      OUTPUT);
-  pinMode(Pin_INT,      OUTPUT);
+  pinMode(Pin_INT,      INPUT_PULLUP);
   pinMode(Pin_VCC_CUR,  OUTPUT);
 
   //variables initialization 
@@ -43,9 +43,8 @@ void JoulemeterClass::Init(void)
   delay(500);   //delay 500ms before program from working
 
   //set gain
-  digitalWrite(Pin_VCC_CUR, HIGH);
   Gain_Control(60,0);
-  digitalWrite(Pin_VCC_CUR, LOW);
+
 
   //initite SPI and CAN
   CAN.begin(1000E3); //1MHz can add judgement based on the returned value
@@ -94,6 +93,10 @@ void JoulemeterClass:: Current_Sampling()
                         //need to change gain based on Res
   //return to normal setting 
   digitalWrite(Pin_SS_ADC, HIGH); 
+
+  Serial.print("Current is ");
+  Serial.print(Amp_Val);
+  Serial.print("\n");
 }
 
 //Voltage Sampling (with mean filtering)
@@ -110,6 +113,11 @@ void JoulemeterClass:: Voltage_Sampling()
   
   Volt_Sample[stack_depth] = 0;
   //Serial.println(voltage);
+
+  //for debug use
+  Serial.print("Voltage is ");
+  Serial.print(Volt_Val);
+  Serial.print("\n");
 }
 
 //filtering
@@ -121,6 +129,8 @@ void JoulemeterClass:: Voltage_Sampling()
 
 void JoulemeterClass:: Gain_Control(u16 res, float max_I)
 {   
+  digitalWrite(Pin_VCC_CUR, HIGH);
+  
   #if (Gain_pri == 1)
     if(res > 100) //set Sens to be 120mV/A
     {
@@ -174,6 +184,8 @@ void JoulemeterClass:: Gain_Control(u16 res, float max_I)
     }
     
   #endif
+  digitalWrite(Pin_VCC_CUR, LOW);
+
 }
 
 
@@ -186,7 +198,7 @@ void JoulemeterClass:: Gain_Control(u16 res, float max_I)
 // interrupt
 
 //Transmit
-void JoulemeterClass:: Can_send(u16 Can_ID, u8 Can_msg)
+void JoulemeterClass:: Can_send(u16 Can_ID, u8 *Can_msg)
 {
   u8 length  = sizeof(Can_msg);
   CAN.beginPacket(Can_ID);
@@ -199,13 +211,21 @@ void  JoulemeterClass:: Can_Recv()
 {
   long id = CAN.packetId(); //should be inside the interrupt
   int DLC = CAN.packetDlc();
+  uint8_t recv_byte = 0;
   for(u8 i = 0; i++; i<id)
   {
     if(CAN.available())
     {
-      int b = CAN.read();
+      recv_byte = CAN.read();   //not really sure what to do
+      if(recv_byte != -1)
+        Serial.print(recv_byte);
+      else
+        Serial.print("recv done");
+                            //but we should directly response to the content
+                            //no need to record
     }
   }
+     
   
 }
 
